@@ -5,7 +5,7 @@ taxonomies = [{ name = "tags" }]
 title = "david's blog"
 
 # The URL the site will be built for
-base_url = "https://example.com"
+base_url = "https://dvdvgt.github.io"
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
