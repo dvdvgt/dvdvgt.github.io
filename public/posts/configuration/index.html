@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" class="dark light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="base" content="https:&#x2F;&#x2F;example.com">
+
+    
+
+    
+    
+    
+    <title>
+         Configuring Apollo
+        
+    </title>
+
+        
+            <meta property="og:title" content="Configuring Apollo" />
+        
+     
+
+     
+         
+     
+
+     
+         
+    
+
+    
+    
+
+    
+    
+        <link href=https://example.com/fonts.css rel="stylesheet" />
+    
+
+    
+    
+
+    
+    
+        <script src=https://example.com/js/codeblock.js></script>
+    
+
+    
+    
+
+    
+    
+
+    
+        
+            <script>
+            MathJax = {
+              tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+              }
+            };
+            </script>
+        
+        <script type="text/javascript" id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+        </script>
+    
+
+    
+    <link rel="alternate" type="application/atom+xml" title="david&#x27;s blog" href="https://example.com/atom.xml">
+
+
+    
+    
+        <link rel="stylesheet" type="text/css" href=https://example.com/theme/light.css />
+        <link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://example.com/theme/dark.css" />
+    
+
+    <!-- Set the correct theme in the script -->
+
+    
+        <script src=https://example.com/js/themetoggle.js></script>
+
+        
+            <script>setTheme(getSavedTheme());</script>
+        
+    
+
+
+    <link rel="stylesheet" type="text/css" media="screen" href=https://example.com/main.css />
+
+    
+
+    <script src=https://example.com/js/mermaid.js></script>
+
+    <script defer src="https://example.com/search_index.en.js?h=adb3e9d55f3094af59dd"></script>
+        <script defer src="https://example.com/js/searchElasticlunr.min.js?h=3626c0ef99daa745b31e"></script></head>
+
+
+<body>
+    <div class="content">
+        <header>
+    <div class="main">
+        
+            <a href=https:&#x2F;&#x2F;example.com>david&#x27;s blog</a>
+        
+
+
+        <div class="socials">
+            
+        </div>
+    </div>
+
+    <nav>
+        
+            <a href=https://example.com style="margin-left: 0.25em">home</a>
+        
+            <a href=https://example.com/posts style="margin-left: 0.25em">posts</a>
+        
+            <a href=https://example.com/projects style="margin-left: 0.25em">projects</a>
+        
+            <a href=https://example.com/about style="margin-left: 0.25em">about</a>
+        
+
+        
+        <button 
+            id="search-button"
+            class="search-button"
+            title="$SHORTCUT to open search"
+        >
+            <img 
+                src="https://example.com/icons/search.svg" 
+                alt="Search" 
+                class="search-icon"
+            >
+        </button>
+
+        <div id="searchModal" class="search-modal js" role="dialog" aria-labelledby="modalTitle">
+            <div id="modal-content">
+                <h1 id="modalTitle" class="page-header">Search</h1>
+                <div id="searchBar">
+                    <input 
+                        id="searchInput" 
+                        role="combobox" 
+                        autocomplete="off" 
+                        spellcheck="false" 
+                        aria-expanded="false" 
+                        aria-controls="results-container" 
+                        placeholder="Search..."
+                    />
+                    <button 
+                        id="clear-search" 
+                        class="clear-button"
+                        title="Clear search"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="results-container">
+                    <div id="results-info">
+                        <span id="zero_results" style="display: none;">No results</span>
+                        <span id="one_result" style="display: none;">1 result</span>
+                        <span id="many_results" style="display: none;">$NUMBER results</span>
+                    </div>
+                    <div id="results" role="listbox"></div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+            <a id="dark-mode-toggle" onclick="toggleTheme(); event.preventDefault();" href="#">
+                <img src=https://example.com/icons/sun.svg id="sun-icon" style="filter: invert(1);" alt="Light" />
+                <img src=https://example.com/icons/moon.svg id="moon-icon" alt="Dark" />
+            </a>
+
+            <!-- Inititialize the theme toggle icons -->
+            <script>updateItemToggleTheme()</script>
+        
+    </nav>
+</header>
+
+
+        
+        
+    
+<main>
+    <article>
+        <div class="title">
+            
+            
+    <div class="page-header">
+        Configuring Apollo<span class="primary-color" style="font-size: 1.6em">.</span>
+    </div>
+
+
+                <div class="meta">
+                    
+                        Posted on <time>2024-07-09</time>
+                    
+
+                    
+
+                    
+
+                    
+                        :: 501 Words
+                    
+
+                    
+                    
+                            <span class="tags-label"> :: Tags:</span>
+                            <span class="tags">
+                                    <a href="https://example.com/tags/documentation/" class="post-tag">documentation</a>
+                                
+                            </span>
+                    
+
+                    
+                    
+                        
+                        
+                            
+                        
+
+                        
+                    
+
+                    
+
+                </div>
+        </div>
+
+        
+
+        
+        
+
+        <section class="body">
+            <h1 id="site-configuration"><a class="zola-anchor" href="#site-configuration" aria-label="Anchor link for: site-configuration">Site Configuration</a></h1>
+<h2 id="search-build-search-index"><a class="zola-anchor" href="#search-build-search-index" aria-label="Anchor link for: search-build-search-index">Search (<code>build_search_index</code>)</a></h2>
+<p>Enables or disables the search functionality for your blog.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: false</li>
+<li>Usage: <code>build_search_index = false</code></li>
+</ul>
+<p>When enabled, a search index will be generated for your blog, allowing visitors to search for specific content.
+Additionally, a search button will be displayed in the navigation bar.</p>
+<p>Configure the search like this:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">build_search_index </span><span>= </span><span style="color:#d08770;">true
+</span><span>
+</span><span>[search]
+</span><span style="color:#bf616a;">include_title </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">include_description </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">include_path </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">include_content </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">index_format </span><span>= &quot;</span><span style="color:#a3be8c;">elasticlunr_json</span><span>&quot;
+</span></code></pre>
+<h2 id="theme-mode-theme"><a class="zola-anchor" href="#theme-mode-theme" aria-label="Anchor link for: theme-mode-theme">Theme Mode (<code>theme</code>)</a></h2>
+<p>Sets the color theme for your blog.</p>
+<ul>
+<li>Type: String</li>
+<li>Options: "light", "dark", "auto", "toggle"</li>
+<li>Default: "toggle"</li>
+<li>Usage: <code>theme = "toggle"</code></li>
+</ul>
+<p>The "toggle" option allows users to switch between light and dark modes, while "auto" typically follows the user's system preferences.</p>
+<h2 id="menu"><a class="zola-anchor" href="#menu" aria-label="Anchor link for: menu">Menu</a></h2>
+<p>Defines the navigation menu items for your blog.</p>
+<ul>
+<li>Type: Array of objects</li>
+<li>Default: []</li>
+<li>Usage:<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">menu </span><span>= [
+</span><span>    { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">/posts</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">/posts</span><span>&quot;, </span><span style="color:#bf616a;">weight </span><span>= </span><span style="color:#d08770;">1 </span><span>},
+</span><span>    { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">/projects</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">/projects</span><span>&quot;, </span><span style="color:#bf616a;">weight </span><span>= </span><span style="color:#d08770;">2 </span><span>},
+</span><span>    { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">/about</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">/about</span><span>&quot;, </span><span style="color:#bf616a;">weight </span><span>= </span><span style="color:#d08770;">3 </span><span>},
+</span><span>    { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">/tags</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">/tags</span><span>&quot;, </span><span style="color:#bf616a;">weight </span><span>= </span><span style="color:#d08770;">4 </span><span>},
+</span><span>]
+</span></code></pre>
+</li>
+</ul>
+<h2 id="logo"><a class="zola-anchor" href="#logo" aria-label="Anchor link for: logo">Logo</a></h2>
+<p>Defines the site logo image file.</p>
+<ul>
+<li>Type: String</li>
+<li>Usage:<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">logo </span><span>= &quot;</span><span style="color:#a3be8c;">site_logo.svg</span><span>&quot;
+</span></code></pre>
+</li>
+</ul>
+<h2 id="socials"><a class="zola-anchor" href="#socials" aria-label="Anchor link for: socials">Socials</a></h2>
+<p>Defines the social media links.</p>
+<ul>
+<li>Type: Array of objects</li>
+<li>Default: []</li>
+<li>Usage:<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">socials </span><span>= [
+</span><span>  { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">twitter</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">https://twitter.com/not_matthias</span><span>&quot;, </span><span style="color:#bf616a;">icon </span><span>= &quot;</span><span style="color:#a3be8c;">twitter</span><span>&quot; },
+</span><span>  { </span><span style="color:#bf616a;">name </span><span>= &quot;</span><span style="color:#a3be8c;">github</span><span>&quot;, </span><span style="color:#bf616a;">url </span><span>= &quot;</span><span style="color:#a3be8c;">https://github.com/not-matthias/</span><span>&quot;, </span><span style="color:#bf616a;">icon </span><span>= &quot;</span><span style="color:#a3be8c;">github</span><span>&quot; },
+</span><span>]
+</span></code></pre>
+</li>
+</ul>
+<h2 id="table-of-contents-toc"><a class="zola-anchor" href="#table-of-contents-toc" aria-label="Anchor link for: table-of-contents-toc">Table of Contents (<code>toc</code>)</a></h2>
+<p>Enables or disables the table of contents for posts.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: true</li>
+<li>Usage: <code>toc = true</code></li>
+</ul>
+<p>When enabled, a table of contents will be generated for posts, making it easier for readers to navigate through longer articles.</p>
+<p>Note: This feature adds additional JavaScript to your site.</p>
+<h2 id="cdn-usage-use-cdn"><a class="zola-anchor" href="#cdn-usage-use-cdn" aria-label="Anchor link for: cdn-usage-use-cdn">CDN Usage (<code>use_cdn</code>)</a></h2>
+<p>Determines whether to use a Content Delivery Network (CDN) for assets.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: false</li>
+<li>Usage: <code>use_cdn = false</code></li>
+</ul>
+<p>When set to true, the theme will attempt to load assets from a CDN, which can improve loading times for visitors from different geographic locations.</p>
+<h2 id="favicon-favicon"><a class="zola-anchor" href="#favicon-favicon" aria-label="Anchor link for: favicon-favicon">Favicon (<code>favicon</code>)</a></h2>
+<p>Specifies the path to the favicon image for your blog.</p>
+<ul>
+<li>Type: String</li>
+<li>Default: "/icon/favicon.png"</li>
+<li>Usage: <code>favicon = "/icon/favicon.png"</code></li>
+</ul>
+<p>This sets the small icon that appears in the browser tab for your website.</p>
+<h2 id="fancy-code-styling-fancy-code"><a class="zola-anchor" href="#fancy-code-styling-fancy-code" aria-label="Anchor link for: fancy-code-styling-fancy-code">Fancy Code Styling (<code>fancy_code</code>)</a></h2>
+<p>Enables enhanced styling for code blocks.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: true</li>
+<li>Usage: <code>fancy_code = true</code></li>
+</ul>
+<p>This option adds the language label and a copy button.</p>
+<h2 id="dynamic-notes-dynamic-note"><a class="zola-anchor" href="#dynamic-notes-dynamic-note" aria-label="Anchor link for: dynamic-notes-dynamic-note">Dynamic Notes (<code>dynamic_note</code>)</a></h2>
+<p>Allows for the creation of togglable note sections in your content.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: true</li>
+<li>Usage: <code>dynamic_note = true</code></li>
+</ul>
+<p>When enabled, you can create expandable/collapsible note sections in your blog posts.</p>
+<h2 id="anchor-links"><a class="zola-anchor" href="#anchor-links" aria-label="Anchor link for: anchor-links">Anchor Links</a></h2>
+<p>You can add anchor links by adding the following to your <code>_index.md</code>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="color:#bf616a;">insert_anchor_links </span><span>= &quot;</span><span style="color:#a3be8c;">heading</span><span>&quot;
+</span></code></pre>
+<h2 id="analytics"><a class="zola-anchor" href="#analytics" aria-label="Anchor link for: analytics">Analytics</a></h2>
+<p>Enable or disable analytics tracking:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[extra.analytics]
+</span><span style="color:#bf616a;">enabled </span><span>= </span><span style="color:#d08770;">false
+</span></code></pre>
+<p>After enabling analytics, configure GoatCounter or Umami.</p>
+<h3 id="goatcounter"><a class="zola-anchor" href="#goatcounter" aria-label="Anchor link for: goatcounter">GoatCounter</a></h3>
+<p>Configure GoatCounter analytics:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[extra.analytics.goatcounter]
+</span><span style="color:#bf616a;">user </span><span>= &quot;</span><span style="color:#a3be8c;">your_user</span><span>&quot;           </span><span style="color:#65737e;"># Your GoatCounter username
+</span><span style="color:#bf616a;">host </span><span>= &quot;</span><span style="color:#a3be8c;">example.com</span><span>&quot;         </span><span style="color:#65737e;"># Optional: Custom host
+</span></code></pre>
+<h3 id="umami-analytics"><a class="zola-anchor" href="#umami-analytics" aria-label="Anchor link for: umami-analytics">Umami Analytics</a></h3>
+<p>Configure Umami analytics:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[extra.analytics.umami]
+</span><span style="color:#bf616a;">website_id </span><span>= &quot;</span><span style="color:#a3be8c;">43929cd1-1e83....</span><span>&quot;                    </span><span style="color:#65737e;"># Your Umami website ID
+</span><span style="color:#bf616a;">host_url </span><span>= &quot;</span><span style="color:#a3be8c;">https://stats.mywebsite.com</span><span>&quot;            </span><span style="color:#65737e;"># Optional: Custom host URL
+</span></code></pre>
+<hr />
+<h1 id="page-configuration"><a class="zola-anchor" href="#page-configuration" aria-label="Anchor link for: page-configuration">Page configuration</a></h1>
+<h2 id="source-code-repo-view"><a class="zola-anchor" href="#source-code-repo-view" aria-label="Anchor link for: source-code-repo-view">Source code (<code>repo_view</code>)</a></h2>
+<p>Do you want to link to the source code of your blog post? You can turn on the <code>repo_view</code> inside the <code>[extra]</code> section of your blog post.</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[extra]
+</span><span style="color:#bf616a;">repo_view </span><span>= </span><span style="color:#d08770;">true
+</span><span style="color:#bf616a;">repo_url </span><span>= &quot;</span><span style="color:#a3be8c;">https://github.com/not-matthias/apollo/tree/main/content</span><span>&quot;   </span><span style="color:#65737e;"># Alternatively add the repo here
+</span></code></pre>
+<p>The <code>repo_url</code> can be set in the <code>[extra]</code> section or in your <code>config.toml</code>.</p>
+<h2 id="comments-comment"><a class="zola-anchor" href="#comments-comment" aria-label="Anchor link for: comments-comment">Comments (<code>comment</code>)</a></h2>
+<p>Enables or disables the comment system for posts.</p>
+<ul>
+<li>Type: Boolean</li>
+<li>Default: false</li>
+<li>Usage: <code>comment = false</code></li>
+</ul>
+<p>After making <code>comment = true</code> in <code>[extra]</code> section of you post, save your script from <a href="https://giscus.app">Giscus</a> to <code>templates/_giscus_script.html</code>.
+When enabled, this allows readers to leave comments on your blog posts. This feature has to be set for each individual post and is not supported at higher levels.</p>
+<p>Example configuration in <a href="https://github.com/not-matthias/apollo/blob/main/content/posts/configuration.md">content/posts/configuration.md</a>:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span style="background-color:#bf616a;color:#2b303b;">+++</span><span>
+</span><span style="color:#bf616a;">title </span><span>= &quot;</span><span style="color:#a3be8c;">Configuring Apollo</span><span>&quot;
+</span><span>
+</span><span>[extra]
+</span><span style="color:#bf616a;">comment </span><span>= </span><span style="color:#d08770;">true
+</span><span style="background-color:#bf616a;color:#2b303b;">+++</span><span>
+</span></code></pre>
+<p>Comments via <a href="https://utteranc.es">utterances</a> can be configured in <code>template/_giscus_script.html</code> like this:</p>
+<pre data-lang="html" style="background-color:#2b303b;color:#c0c5ce;" class="language-html "><code class="language-html" data-lang="html"><span>&lt;</span><span style="color:#bf616a;">script </span><span style="color:#d08770;">src</span><span>=&quot;</span><span style="color:#a3be8c;">https://utteranc.es/client.js</span><span>&quot;
+</span><span>        </span><span style="color:#d08770;">repo</span><span>=&quot;</span><span style="color:#a3be8c;">YOUR_NAME/YOUR_REPO</span><span>&quot;
+</span><span>        </span><span style="color:#d08770;">issue-term</span><span>=&quot;</span><span style="color:#a3be8c;">pathname</span><span>&quot;
+</span><span>        </span><span style="color:#d08770;">theme</span><span>=&quot;</span><span style="color:#a3be8c;">github-light</span><span>&quot;
+</span><span>        </span><span style="color:#d08770;">crossorigin</span><span>=&quot;</span><span style="color:#a3be8c;">anonymous</span><span>&quot;
+</span><span>        </span><span style="color:#d08770;">async</span><span>&gt;
+</span><span>&lt;/</span><span style="color:#bf616a;">script</span><span>&gt;
+</span></code></pre>
+
+        </section>
+    </article>
+</main>
+
+
+
+        
+            
+        
+
+        
+        <div class="giscus"></div>
+        <script src="https://utteranc.es/client.js"
+        repo="YOUR_NAME/YOUR_REPO"  <!-- <-- CHANGE THIS TO YOUR REPO -->
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+        
+    </div>
+</body>
+
+</html>
