@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="https://dvoigt.de/main.css">
+    <title>David Voigt</title>
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+
+</head>
+<body>
+    <header>
+        <nav>
+            <div id="nav-left">
+                <a href="/" class="site-title">David Voigt</a>
+            </div>
+            <!-- <span class="nav-separator">·</span> -->
+            <div id="nav-right">
+            
+                
+                <a href="https://dvoigt.de" >home</a>
+                
+                <a href="https://dvoigt.de/posts" >posts</a>
+                
+            
+            
+            </div>
+        </nav>
+    </header>
+    <main>
+        <h1> Forward Automatic Differentiation </h1>
+        
+    <p>Recently, I was fascinated by the ideas presented in the wounderfull <a href="https://www.youtube.com/watch?v=QwFLA5TrviI">video</a> by <a href="https://www.youtube.com/@Computerphile">Computerphile</a> on YouTube.
+It is about automatically computing the derivatives.
+I found the idea and concept very interesting and tried to re-iterate them in more detail and more formally here.</p>
+<p>From your high school calculus days, you likely recall symbolic differentiation—though perhaps not by that specific name. When faced with a function like $f(x)=sin⁡(x)^2$, you'd methodically apply the chain rule to derive $f'(x)=2sin⁡(x)cos⁡(x)$. This process relies on memorizing fundamental identities such as $\frac{\mathrm{d}}{x} \ln(x) = \frac{1}{x}$, the chain rule $\frac{\mathrm{d}}{x} f(g(x)) = f'(g(x)) g'(x)$, or the product rule.</p>
+<p>When computing derivatives, two primary approaches have traditionally dominated the field:</p>
+<ul>
+<li><strong>Symbolic differentiation</strong>: Deriving analytical forms by systematically applying mathematical identities until reaching a closed-form solution.</li>
+<li><strong>Numerical differentiation</strong>: Employing numerical algorithms to approximate derivatives.</li>
+</ul>
+<p>While symbolic differentiation offers intuitive appeal and works elegantly on paper for simpler expressions, automating this process comes with significant challenges. The function must be parsed into an abstract syntax tree that captures the precise order of operations. Although this approach yields exact results, it often generates redundant calculations due to the chain and product rules, creating serious computational inefficiencies for complex expressions.
+Numerical methods, while potentially faster and more flexible, sacrifice precision and can introduce stability issues that undermine their reliability.</p>
+<p>There is another approach that combines the benefits of both the other approaches and while mostly eliminating their respective disadvantages: <strong>automatic differentiation</strong>.
+If you work in deep learning, you're already benefiting from automatic differentiation through backpropagation—which is actually reverse-mode automatic differentiation. This algorithm efficiently computes gradients through complex neural networks, making modern deep learning computationally feasible. Without this approach, training sophisticated models would remain prohibitively expensive.
+In this post, I will introduce the foundational concepts of automatic differentiation and present an elegant implementation of forward automatic differentiation in Haskell, revealing the mathematical beauty and computational efficiency that make this technique indispensable in modern computational science.</p>
+<h2 id="automatic-differentiation">Automatic Differentiation</h2>
+<p>The chain rule is the fundamental concept for automatic differentiation.
+Consider the composite function $h(x) = f(g(d(x)))$ with $u_3 = y = f(u_2), u_2 = g(u_1), u_1 = l(u_0), u_0 = x$, then the chain rules tells us that
+$$
+\frac{\partial y}{\partial x} = \frac{\partial f(u_2)}{\partial u_2} \frac{\partial g(u_1)}{\partial u_1} \frac{\partial l(x)}{\partial x} = \frac{\partial y}{\partial u_2} \frac{\partial u_2}{\partial u_1} \frac{\partial u_1}{\partial x}
+$$
+This yields two directions in which we can calculate the overall derivative:</p>
+<ol>
+<li><strong>Forward mode</strong>: We start with the right-most term and then recursively work our way "outwards". That is, we recursively compute
+$$
+\frac{\partial u_i}{\partial x} = \frac{\partial u_i}{\partial u_{i - 1}} \frac{\partial u_{i - 1}}{\partial x}
+$$
+and start with $\frac{\partial u_0}{\partial x} = \frac{\partial x}{\partial x} = 1$</li>
+<li><strong>Backward (reverse) mode</strong>: We start with the right-most term and then recursively work our way "inwards":
+$$
+\frac{\partial y}{\partial u_i} = \frac{\partial y}{\partial u_{i + 1}} \frac{\partial u_{i + 1}}{\partial u_i}
+$$
+and we start with $\frac{\partial y}{\partial u_n} = \frac{\partial y}{\partial y} = 1$.</li>
+</ol>
+<p>Notice how the forward mode keeps the independent variable fixed and thereby computes the derivative for each variable in one separate pass.
+Reverse mode, on the other hand, requires the evaluated partial functions for the partial derivatives. Thus, function is evaluated first and then the derivatives with respect to all independent variables is calculated in an additional pass.</p>
+<h2 id="dual-numbers">Dual Numbers</h2>
+<p>Now, consider a function $f(x)$ and the taylor expansion of $f$ around some $\epsilon$ such that $\epsilon^2 = 0$ and $\epsilon \neq 0$:</p>
+<p>$$
+\begin{align*}
+f(x + \epsilon) &amp;= \sum_{d = 0}^\infty \frac{f^d(x)}{d!} \epsilon^d \\
+&amp;= f(x) + f'(x) \cdot \epsilon + f''(x) \cdot \epsilon^2 + f'''(x) \cdot \epsilon \epsilon^2 + \dots \\
+&amp;= f(x) + f'(x) \epsilon
+\end{align*}
+$$</p>
+<p>Notice that the factor of $\epsilon$ corresponds to the derivative of $f$.
+What happens if we have another function $g$ and we try to add or multiply it?</p>
+<p>$$
+\begin{align*}
+f(x + \epsilon) + g(x + \epsilon) &amp;= f(x) + f'(x) \epsilon + g(x) + g'(x) \epsilon = f(x) + g(x) + (f'(x) + g'(x)) \epsilon \\
+f(x + \epsilon) \cdot g(x + \epsilon) &amp;= (f(x) + f'(x)\epsilon) \cdot (g(x) + g'(x) \epsilon) = f(x) g(x) + (f(x) g'(x) + g(x) f'(x)) \epsilon
+\end{align*}
+$$</p>
+<p>You might notice these as the sum and product rule of derivatives!
+If we squint a bit, we see that the first term always corresponds to the function we want to compute the derivative of and the second term represents the actual derivative.
+We ca leverage this for automatically computing the forward derivative of arbitrary function for which a taylor expansion exists.</p>
+<p>We define dual numbers as a pair
+$$d = \langle a, b \rangle$$
+where $a = f(x)$ and $b = f'(x)$ (of the $\epsilon$ term).
+For example, we can write $\sin(x)$ as the dual number
+$$\langle \sin(x), \cos(x) \rangle$$
+or
+$$\langle \ln x, \frac{1}{x} \rangle, \quad \langle e^x, e^x \rangle$$
+Using the sum, product rule and division rule, that is,
+$$
+\begin{align*}
+\langle a, b \rangle + \langle c, d \rangle &amp;= \langle a + d, b + c \rangle \\
+\langle a, b \rangle \cdot \langle c, d \rangle &amp;= \langle a \cdot b, ad + cb \rangle \\
+\langle a, b \rangle / \langle c, d \rangle &amp;= \langle a / c, \frac{bc - ad}{c^2} \rangle
+\end{align*}
+$$
+we can piece together the derivative for more complex functions.
+Consider, for example, the sigmoid (activation) function $\sigma(x) = \frac{e^x}{1 + e^x}$ at some $x$ represented as the dual number $\langle x, 1 \rangle$:
+$$
+\begin{align}
+\frac{e^{\langle x, 1 \rangle}}{\langle 1, 0 \rangle + e^{\langle x, 1 \rangle}} &amp;= \frac{\langle e^x, e^x \rangle}{\langle 1+  e^x, e^x \rangle} \\
+&amp;= \frac{\langle e^x, e^x \rangle}{\langle 1 + e^x, e^x \rangle} \\
+&amp;= \langle \frac{e^x}{1 + e^x}, \frac{e^x (1 + e^x) - e^{2x}}{(1 + e^x)^2} \rangle \\
+&amp;= \langle \frac{e^x}{1 + e^x}, \frac{1}{1 + e^x} \cdot \frac{e^x}{1 + e^x} \rangle \\
+&amp;= \langle \sigma(x), (1 - \sigma(x)) \sigma(x) \rangle
+\end{align}
+$$
+Notice that we thread through the input and arrive at the valid derivative automatically.</p>
+<h2 id="implementation">Implementation</h2>
+<p>For the implementation, I chose Haskell due to its nice overloading capabilities via type classes.</p>
+<p>First, we define a datatype for dual numbers:</p>
+<pre data-lang="haskell" style="background-color:#2b303b;color:#c0c5ce;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b48ead;">data </span><span style="color:#d08770;">Dual </span><span>= { real :: </span><span style="color:#d08770;">Double</span><span>, dual :: </span><span style="color:#d08770;">Double</span><span> }
+</span></code></pre>
+<p>Next, we implement the <code>Num</code> and <code>Fractional</code> type class since we want to overload the <code>+</code>, <code>-</code>, <code>*</code> and <code>/</code> operator:</p>
+<pre data-lang="haskell" style="background-color:#2b303b;color:#c0c5ce;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b48ead;">instance Num Dual where
+</span><span>  (</span><span style="color:#d08770;">Dual</span><span> a b) + (</span><span style="color:#d08770;">Dual</span><span> c d) = </span><span style="color:#d08770;">Dual</span><span> (a + c) (b + d)
+</span><span>  (</span><span style="color:#d08770;">Dual</span><span> a b) * (</span><span style="color:#d08770;">Dual</span><span> c d) = </span><span style="color:#d08770;">Dual</span><span> (a * c) (a * d + b * c)
+</span><span>  negate (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (negate a) (negate b)
+</span><span>  fromInteger n = </span><span style="color:#d08770;">Dual</span><span> (fromInteger n) </span><span style="color:#d08770;">0
+</span><span>  </span><span style="color:#65737e;">-- abs and signum are not defined for Dual numbers
+</span><span>  abs = undefined
+</span><span>  signum = undefined
+</span><span>
+</span><span style="color:#b48ead;">instance Fractional Dual where
+</span><span>  (</span><span style="color:#d08770;">Dual</span><span> a b) / (</span><span style="color:#d08770;">Dual</span><span> c d) = </span><span style="color:#d08770;">Dual</span><span> (a / c) ((b * c - a * d) / (c * c))
+</span><span>  fromRational r = </span><span style="color:#d08770;">Dual</span><span> (fromRational r) </span><span style="color:#d08770;">0
+</span></code></pre>
+<p>Notice that these exactly correspond to the rules we previously derived formally.</p>
+<p>Of course automatic differentiation is not pure magic and need to define the derivatives of common functions once manually.
+This can be done by implenting the <code>Floating</code> type class where many commonly used mathematical functions are defined and can be overloaded to also accept dual numbers:</p>
+<pre data-lang="haskell" style="background-color:#2b303b;color:#c0c5ce;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#b48ead;">instance Floating Dual where
+</span><span>  pi = </span><span style="color:#d08770;">Dual</span><span> pi </span><span style="color:#d08770;">0
+</span><span>  exp (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (exp a) (b * exp a)
+</span><span>  log (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (log a) (b / a)
+</span><span>  sin (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (sin a) (b * cos a)
+</span><span>  cos (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (cos a) (-b * sin a)
+</span><span>  asin (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (asin a) (b / sqrt (</span><span style="color:#d08770;">1 </span><span>- a * a))
+</span><span>  acos (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (acos a) (-b / sqrt (</span><span style="color:#d08770;">1 </span><span>- a * a))
+</span><span>  atan (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (atan a) (b / (</span><span style="color:#d08770;">1 </span><span>+ a * a))
+</span><span>  sinh (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (sinh a) (b * cosh a)
+</span><span>  cosh (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (cosh a) (b * sinh a)
+</span><span>  asinh (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (asinh a) (b / sqrt (</span><span style="color:#d08770;">1 </span><span>+ a * a))
+</span><span>  acosh (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (acosh a) (b / sqrt (a * a - </span><span style="color:#d08770;">1</span><span>))
+</span><span>  atanh (</span><span style="color:#d08770;">Dual</span><span> a b) = </span><span style="color:#d08770;">Dual</span><span> (atanh a) (b / (</span><span style="color:#d08770;">1 </span><span>- a * a))
+</span></code></pre>
+<p>Now we get to the actual interesting part: automatically compute the derivative for any function of the type $\mathbb{R} \to \mathbb{R}$.
+Hence, we define the function <code>diff</code> with the type <code>(Dual -&gt; Dual) -&gt; Double -&gt; Double</code>, that is, a function that accepts a function <code>f</code> and an argument <code>x</code> at which the derivative shall be evaluated:</p>
+<pre data-lang="haskell" style="background-color:#2b303b;color:#c0c5ce;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span style="color:#8fa1b3;">diff </span><span style="color:#b48ead;">::</span><span> (</span><span style="color:#b48ead;">Dual -&gt; Dual</span><span>) </span><span style="color:#b48ead;">-&gt; Double -&gt; Double
+</span><span>diff f x = dual $ f (</span><span style="color:#d08770;">Dual</span><span> x </span><span style="color:#d08770;">1</span><span>)
+</span></code></pre>
+<p>Magical, isn't it?
+Now we have an embedded DSL for computing derivatives in Haskell:</p>
+<pre data-lang="haskell" style="background-color:#2b303b;color:#c0c5ce;" class="language-haskell "><code class="language-haskell" data-lang="haskell"><span>main = </span><span style="color:#b48ead;">do
+</span><span>  </span><span style="color:#b48ead;">let</span><span> f x = </span><span style="color:#d08770;">1 </span><span>/ (</span><span style="color:#d08770;">1 </span><span>+ e ** (- x))
+</span><span>  putStrLn $ diff f </span><span style="color:#d08770;">0
+</span></code></pre>
+<p>Alternatively, you can also simply start a REPL session using <code>ghci</code>:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">$</span><span> ghci dual.hs
+</span><span style="color:#bf616a;">ghci</span><span>&gt; f x = 1 / (1 + e ** (- x))
+</span><span style="color:#bf616a;">ghci</span><span>&gt; diff f 0
+</span></code></pre>
+<p>Running this yields <code>0.25</code> as result.
+Plugging this into the analytical form we have found previously yields the same result:
+$$\frac{e^x}{1 + e^x} \frac{1}{1 + e^x} = \frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}$$</p>
+<h2 id="extensions">Extensions</h2>
+<p>I hope you also found this as fascinating as I did when I first heard about it.
+There are some interesting generalisation we can apply to our current implementation as an exercise:</p>
+<ol>
+<li>Think about how to compute the partial derivative of functions $\mathbb{R} \to \mathbb{R}^m$ and implement a function <code>partial :: (Dual -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [Double]</code> which computes the partial derivatives with respect to the i-th parameter.</li>
+<li>How can you generalise <code>partial</code> to also accept functions $\mathbb{R}^n \to \mathbb{R}^m$? Adapt the implementation of <code>partial</code> such that it has the type <code>([Dual] -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [Double]</code>.</li>
+<li>Finally, implement a function <code>gradient</code> that computes the gradient of functions $\mathbb{R}^n \to \mathbb{R}^m$. <code>gradient</code> now shall have the type <code>([Dual] -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [[Double]]</code>, that is, it returns a matrix. Hint: <code>partial</code> should come in handy here. What do you observe? When is forward AD to be preferred? If $n &lt; m$ or $n &gt; m$?</li>
+</ol>
+
+
+    </main>
+    <footer id="site-footer">
+        
+        <ul id="socials">
+            
+            <li>
+                <a href="https:&#x2F;&#x2F;github.com&#x2F;dvdvgt" rel="me" title="GitHub">
+                    <i class="icon" style='mask-image: url("data:image/svg+xml,%3Csvg xmlns=&#x27;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&#x27; viewBox=&#x27;0 0 24 24&#x27;%3E%3Cpath d=&#x27;M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12&#x27;&#x2F;%3E%3C&#x2F;svg%3E"); -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns=&#x27;http:&#x2F;&#x2F;www.w3.org&#x2F;2000&#x2F;svg&#x27; viewBox=&#x27;0 0 24 24&#x27;%3E%3Cpath d=&#x27;M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12&#x27;&#x2F;%3E%3C&#x2F;svg%3E")'></i>
+                    <span>GitHub</span>
+                </a>
+            </li>
+            
+        </ul>
+        
+
+        
+        <span class="copyright">&copy; 2025 David Voigt</span>
+        
+
+        
+    </footer>
+</body>
+</html>
