@@ -6,7 +6,7 @@ title = "David Voigt"
 author = "David Voigt"
 
 # The URL the site will be built for
-base_url = "dvoigt.de"
+base_url = "https://dvoigt.de"
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = true
