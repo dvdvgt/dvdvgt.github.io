@@ -1,9 +1,6 @@
 +++
 title = "Forward Automatic Differentiation"
 date = "2025-02-26"
-
-[taxonomies]
-tags=["Math"]
 +++
 
 Recently, I was fascinated by the ideas presented in the wounderfull [video](https://www.youtube.com/watch?v=QwFLA5TrviI) by [Computerphile](https://www.youtube.com/@Computerphile) on YouTube.
@@ -24,7 +21,7 @@ There is another approach that combines the benefits of both the other approache
 If you work in deep learning, you're already benefiting from automatic differentiation through backpropagation—which is actually reverse-mode automatic differentiation. This algorithm efficiently computes gradients through complex neural networks, making modern deep learning computationally feasible. Without this approach, training sophisticated models would remain prohibitively expensive.
 In this post, I will introduce the foundational concepts of automatic differentiation and present an elegant implementation of forward automatic differentiation in Haskell, revealing the mathematical beauty and computational efficiency that make this technique indispensable in modern computational science.
 
-# Automatic Differentiation
+## Automatic Differentiation
 
 The chain rule is the fundamental concept for automatic differentiation.
 Consider the composite function $h(x) = f(g(d(x)))$ with $u_3 = y = f(u_2), u_2 = g(u_1), u_1 = l(u_0), u_0 = x$, then the chain rules tells us that
@@ -46,7 +43,7 @@ This yields two directions in which we can calculate the overall derivative:
 Notice how the forward mode keeps the independent variable fixed and thereby computes the derivative for each variable in one separate pass.
 Reverse mode, on the other hand, requires the evaluated partial functions for the partial derivatives. Thus, function is evaluated first and then the derivatives with respect to all independent variables is calculated in an additional pass.
 
-# Dual Numbers
+## Dual Numbers
 
 Now, consider a function $f(x)$ and the taylor expansion of $f$ around some $\epsilon$ such that $\epsilon^2 = 0$ and $\epsilon \neq 0$:
 
@@ -100,7 +97,7 @@ $$
 $$
 Notice that we thread through the input and arrive at the valid derivative automatically.
 
-# Implementation
+## Implementation
 
 For the implementation, I chose Haskell due to its nice overloading capabilities via type classes.
 
