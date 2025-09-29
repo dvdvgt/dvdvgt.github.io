@@ -7,7 +7,9 @@ Recently, I was fascinated by the ideas presented in the wounderfull [video](htt
 It is about automatically computing the derivatives.
 I found the idea and concept very interesting and tried to re-iterate them in more detail and more formally here.
 
-From your high school calculus days, you likely recall symbolic differentiation—though perhaps not by that specific name. When faced with a function like $f(x)=sin⁡(x)^2$, you'd methodically apply the chain rule to derive $f'(x)=2sin⁡(x)cos⁡(x)$. This process relies on memorizing fundamental identities such as $\frac{\mathrm{d}}{x} \ln(x) = \frac{1}{x}$, the chain rule $\frac{\mathrm{d}}{x} f(g(x)) = f'(g(x)) g'(x)$, or the product rule.
+From your high school calculus days, you likely recall symbolic differentiation—though perhaps not by that specific name.
+When faced with a function like $f(x)=sin⁡(x)^2$, you'd methodically apply the chain rule to derive $f'(x)=2 \sin⁡{x} \cos⁡{x}$.
+This process relies on memorizing fundamental identities such as $\frac{\mathrm{d}}{x} \ln{x} = \frac{1}{x}$, the chain rule $\frac{\mathrm{d}}{x} f(g(x)) = f'(g(x)) g'(x)$, or the product rule.
 
 When computing derivatives, two primary approaches have traditionally dominated the field:
 
