@@ -1,5 +1,5 @@
 :root {
-    --max-width: 45rem;
+    --max-width: 720px;
     --spacing-unit: 1.5rem;
     --spacing-unit-half: calc(var(--spacing-unit) / 2);
     --spacing-unit-quarter: calc(var(--spacing-unit) / 4);
@@ -7,8 +7,8 @@
     --spacing-unit-triple: calc(var(--spacing-unit) * 3);
 
     // --font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-    --font-family: "Fira Sans";
-    --font-family-mono: "SF Mono", Consolas, Monaco, monospace;
+    --font-family: "Fira Sans", sans-serif;
+    --font-family-mono: "Fira Code", monospace;
     --font-size-base: 16px;
     --line-height: 1.6;
     --line-height-heading: 1.2;
