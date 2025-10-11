@@ -3,7 +3,7 @@ title = "Forward Automatic Differentiation"
 date = "2025-02-26"
 +++
 
-Recently, I was fascinated by the ideas presented in the wounderfull [video](https://www.youtube.com/watch?v=QwFLA5TrviI) by [Computerphile](https://www.youtube.com/@Computerphile) on YouTube.
+Recently, I was fascinated by the ideas presented in the wonderful [video](https://www.youtube.com/watch?v=QwFLA5TrviI) by [Computerphile](https://www.youtube.com/@Computerphile) on YouTube.
 It is about automatically computing the derivatives.
 I found the idea and concept very interesting and tried to re-iterate them in more detail and more formally here.
 
@@ -43,7 +43,7 @@ This yields two directions in which we can calculate the overall derivative:
    and we start with $\frac{\partial y}{\partial u_n} = \frac{\partial y}{\partial y} = 1$.
 
 Notice how the forward mode keeps the independent variable fixed and thereby computes the derivative for each variable in one separate pass.
-Reverse mode, on the other hand, requires the evaluated partial functions for the partial derivatives. Thus, function is evaluated first and then the derivatives with respect to all independent variables is calculated in an additional pass.
+Reverse mode, on the other hand, requires the evaluated partial functions for the partial derivatives. Thus, function is evaluated first and then the derivatives with respect to all independent variables are calculated in an additional pass.
 
 ## Dual Numbers
 
@@ -129,7 +129,7 @@ instance Fractional Dual where
 Notice that these exactly correspond to the rules we previously derived formally.
 
 Of course automatic differentiation is not pure magic and need to define the derivatives of common functions once manually.
-This can be done by implenting the `Floating` type class where many commonly used mathematical functions are defined and can be overloaded to also accept dual numbers:
+This can be done by implementing the `Floating` type class where many commonly used mathematical functions are defined and can be overloaded to also accept dual numbers:
 
 ```haskell
 instance Floating Dual where
@@ -180,7 +180,7 @@ $$\frac{e^x}{1 + e^x} \frac{1}{1 + e^x} = \frac{1}{2} \cdot \frac{1}{2} = \frac{
 ## Extensions
 
 I hope you also found this as fascinating as I did when I first heard about it.
-There are some interesting generalisation we can apply to our current implementation as an exercise:
+There are some interesting generalisations, we can apply to our current implementation as an exercise:
 
 1. Think about how to compute the partial derivative of functions $\mathbb{R} \to \mathbb{R}^m$ and implement a function `partial :: (Dual -> [Dual]) -> Int -> Double -> [Double]` which computes the partial derivatives with respect to the i-th parameter.
 2. How can you generalise `partial` to also accept functions $\mathbb{R}^n \to \mathbb{R}^m$? Adapt the implementation of `partial` such that it has the type `([Dual] -> [Dual]) -> Int -> Double -> [Double]`.
