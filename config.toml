@@ -27,7 +27,7 @@ show_copyright = true
 socials = [
   { name = "GitHub", url = "https://github.com/dvdvgt", path = "github.svg" },
   { name = "Website", url = "https://se.informatik.uni-tuebingen.de/team/voigt/", path = "website.svg" },
-  { name = "mail", url = "", path = "mail.svg" }
+  { name = "mail", url = "mailto:website@dvoigt.de", path = "mail.svg" }
 ]
 
 [extra.nav]
