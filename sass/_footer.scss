@@ -45,9 +45,15 @@
         }
     }
 
-    .copyright, .made-with {
+    .made-with {
         display: block;
         margin-bottom: var(--spacing-unit-quarter);
+    }
+
+    #contact {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
     }
 
     a {

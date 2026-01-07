@@ -50,9 +50,10 @@
         </ul>
         {% endif %}
 
-        {% if config.extra.footer.show_copyright %}
-        <span class="copyright">&copy; {{ now() | date(format="%Y") }} {{ config.author }}</span>
-        {% endif %}
+        <div id="contact">
+            <span>&copy; {{ now() | date(format="%Y") }} {{ config.author }}</span>
+            <span><a href="https://webwhois.denic.de/?lang=de&query=dvoigt.de">Contact</a></span>
+        </div>
 
         {% if config.extra.footer.show_made_with %}
         <span class="made-with">Made with <a href="https://www.getzola.org">Zola</a> using <a href="https://github.com/un1970ix/ski">ski</a> theme.</span>
