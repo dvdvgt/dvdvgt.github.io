@@ -15,7 +15,8 @@ compile_sass = true
 build_search_index = true
 
 [markdown.highlighting]
-theme = "github-dark"
+dark_theme = "github-dark"
+light_theme = "github-light"
 
 [extra]
 katex = true
