@@ -90,7 +90,7 @@ we can piece together the derivative for more complex functions.
 Consider, for example, the sigmoid (activation) function $\sigma(x) = \frac{e^x}{1 + e^x}$ at some $x$ represented as the dual number $\langle x, 1 \rangle$:
 $$
 \begin{align*}
-\frac{e^{\langle x, 1 \rangle}}{\langle 1, 0 \rangle + e^{\langle x, 1 \rangle}} &= \frac{\langle e^x, e^x \rangle}{\langle 1+  e^x, e^x \rangle} \\\\
+\frac{e^{\langle x, 1 \rangle}}{\langle 1, 0 \rangle + e^{\langle x, 1 \rangle}} &= \frac{\langle e^x, e^x \rangle}{\langle 1, 0 \rangle + \langle e^x, e^x \rangle} \\\\
 &= \frac{\langle e^x, e^x \rangle}{\langle 1 + e^x, e^x \rangle} \\\\
 &= \langle \frac{e^x}{1 + e^x}, \frac{e^x (1 + e^x) - e^{2x}}{(1 + e^x)^2} \rangle \\\\
 &= \langle \frac{e^x}{1 + e^x}, \frac{1}{1 + e^x} \cdot \frac{e^x}{1 + e^x} \rangle \\\\
