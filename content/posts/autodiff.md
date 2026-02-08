@@ -1,6 +1,7 @@
 +++
 title = "Forward Automatic Differentiation"
 date = "2025-02-26"
+template = "article.html"
 +++
 
 Recently, I was fascinated by the ideas presented in the wonderful [video](https://www.youtube.com/watch?v=QwFLA5TrviI) by [Computerphile](https://www.youtube.com/@Computerphile) on YouTube.
