@@ -7,13 +7,13 @@ template = "article.html"
 +++
 
 Graphs offer a nice theoretical framework for elegantly describing and solving many practical problems like shortest-path (Dijkstra, A*, BFS, DFS), network routing (max-flow) or dependency resolution (topological ordering).
-Since graph are such a general concept and surface in wide variety of problem domains, the visualisation of graphs can be highly insightful.
+Since graphs are such a general concept and surface in a wide variety of problem domains, the visualisation of graphs can be highly insightful.
 Yet, graph drawing, the combination of geometry with graph theory, can be difficult problem.
 
 Recently, I attended a talk in which the live-demo featured such a visualised graph.
 I found the result very aesthetically pleasing and enjoyed the interactiveness of it. 
-You could freely drag and move nodes and the graph would re-arrange itself based on the new initial configuration in a nice way.
-I was intruiged and decided to implement such a force-direct graph drawing (FDGD) algorithm myself.
+You could freely drag and move nodes, and the graph would rearrange itself based on the new initial configuration nicely.
+I was intrigued and decided to implement such a force-directed graph drawing (FDGD) algorithm myself.
 Here is what I learned on the way.
 
 ![](/fdgd.png)
@@ -29,10 +29,10 @@ $$V := \\{ v_1, v_2, \dots, v_n \\}, \quad E := \\{ \\{u, v\\} \mid u, v \in V \
 Depending on whether the direction of the edges is of importance, the graph is either considered directed or undirected.
 In the following, we will just consider undirected graphs for simplicity.
 
-Now, based on this definition, we are completely free to place each vertex whereever we want given that we connected all vertices in $V$ by the edges defined by $E$.
+Now, based on this definition, we are completely free to place each vertex wherever we want given that we connected all vertices in $V$ by the edges defined by $E$.
 However, of course, not all possible configurations are aesthetically pleasing or even instructive.
 There are a lot of different ways to measure the quality of a graph visualisation like the number of crossing edges or minimising the maximum length of all edges.
-Convienently, FDGD inherently checks many of these boxes, so lets see how it works.
+Conveniently, FDGD inherently checks many of these boxes, so let's see how it works.
 
 ## The Force Will Be with You, Always
 
@@ -42,7 +42,7 @@ The repulsive force is often derived from [Coulomb's Law](https://en.wikipedia.o
 $$F_r = k_r \frac{|q_1| |q_2|}{r^2}$$
 
 Like electrons are repulsing one another inversely proportional to the distance between them, each vertex in a graph repulses all other vertices:
-Since our vertices do not have a charge or rather have all the same charge, we can just subsume this by the constant $k_e$.
+Since our vertices do not have a charge or, rather, have all the same charge, we can just subsume this by the constant $k_e$.
 Whereas $k_r$ is originally the Coulomb's Constant, we are free to choose our own constant here.
 
 Having now covered repulsive force, we are still missing an attracting force that binds the graph together.
@@ -50,7 +50,7 @@ For this, we choose [Hooke's Law](https://en.wikipedia.org/wiki/Hooke%27s_law) w
 
 $$F_a = r \cdot k_a$$
 
-That is, if we think about the edges as springs, the amount of force needed to further extend the spring sclaes linearly with the length of the extension $r$ and some constant $k_a$.
+That is, if we think about the edges as springs, the amount of force needed to further extend the spring scales linearly with the length of the extension $r$ and some constant $k_a$.
 
 ## Implementation
 
@@ -108,11 +108,11 @@ integrate(params: Parameters) {
 }
 ```
 
-Notice that we are accumulating forces and then in the end just add them to the velocity.
-This is of course a _very_ simplified physical model.
-Normally, force is $kg \cdot \frac{m}{s^2}$, the velocity is the change in position $\frac{dx}{dt} = v(t)$, and the accelerations is in turn the change in velocity $\frac{dv}{dt} = a(t)$.
-We can, however, try to justify our implementation by assuming that the mass is just one ($m = 1 kg$), and since we are only considering discreet time steps, $dt = 1$. 
-Under these assumption, we can derive the following (simplified) update equations for the position and velocity:
+Notice that we are accumulating forces and then, in the end, just add them to the velocity.
+This is, of course, a _very_ simplified physical model.
+Normally, force is $kg \cdot \frac{m}{s^2}$, the velocity is the change in position $\frac{dx}{dt} = v(t)$, and the acceleration is in turn the change in velocity $\frac{dv}{dt} = a(t)$.
+We can, however, try to justify our implementation by assuming that the mass is just one ($m = 1 kg$), and since we are only considering discrete time steps, $dt = 1$. 
+Under these assumptions, we can derive the following (simplified) update equations for the position and velocity:
 
 $$
 \begin{align*}
