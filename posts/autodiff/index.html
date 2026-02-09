@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/firacode@6.2.0/distr/fira_code.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/fira-sans@5.2.7/index.min.css">
+    <link rel="stylesheet" href="https://dvoigt.de/main.css">
+    <title>Forward Automatic Differentiation :: David Voigt</title>
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+
+</head>
+<body>
+    <header>
+        <nav>
+            <div id="nav-left">
+                <a href="/" class="site-title">David Voigt</a>
+            </div>
+            <!-- <span class="nav-separator">·</span> -->
+            <div id="nav-right">
+            
+                
+                <a href="https://dvoigt.de" >home</a>
+                
+                <a href="https://dvoigt.de/posts" >posts</a>
+                
+            
+            
+            </div>
+        </nav>
+    </header>
+    <main>
+        <h1> </h1>
+        
+<article class="article">
+    <header class="article-header">
+        <h1>Forward Automatic Differentiation</h1>
+        <time datetime="2025-02-26">26.02.2025</time>
+    </header>
+
+    <div class="article-content">
+        <p>Recently, I was fascinated by the ideas presented in the wonderful <a rel="external" href="https://www.youtube.com/watch?v=QwFLA5TrviI">video</a> by <a rel="external" href="https://www.youtube.com/@Computerphile">Computerphile</a> on YouTube.
+It is about automatically computing the derivatives.
+I found the idea and concept very interesting and tried to re-iterate them in more detail and more formally here.</p>
+<p>From your high school calculus days, you likely recall symbolic differentiation—though perhaps not by that specific name.
+When faced with a function like $f(x)=sin⁡(x)^2$, you'd methodically apply the chain rule to derive $f'(x)=2 \sin⁡{x} \cos⁡{x}$.
+This process relies on memorizing fundamental identities such as $\frac{\mathrm{d}}{x} \ln{x} = \frac{1}{x}$, the chain rule $\frac{\mathrm{d}}{x} f(g(x)) = f'(g(x)) g'(x)$, or the product rule.</p>
+<p>When computing derivatives, two primary approaches have traditionally dominated the field:</p>
+<ul>
+<li><strong>Symbolic differentiation</strong>: Deriving analytical forms by systematically applying mathematical identities until reaching a closed-form solution.</li>
+<li><strong>Numerical differentiation</strong>: Employing numerical algorithms to approximate derivatives.</li>
+</ul>
+<p>While symbolic differentiation offers intuitive appeal and works elegantly on paper for simpler expressions, automating this process comes with significant challenges. The function must be parsed into an abstract syntax tree that captures the precise order of operations. Although this approach yields exact results, it often generates redundant calculations due to the chain and product rules, creating serious computational inefficiencies for complex expressions.
+Numerical methods, while potentially faster and more flexible, sacrifice precision and can introduce stability issues that undermine their reliability.</p>
+<p>There is another approach that combines the benefits of both the other approaches and while mostly eliminating their respective disadvantages: <strong>automatic differentiation</strong>.
+If you work in deep learning, you're already benefiting from automatic differentiation through backpropagation—which is actually reverse-mode automatic differentiation. This algorithm efficiently computes gradients through complex neural networks, making modern deep learning computationally feasible. Without this approach, training sophisticated models would remain prohibitively expensive.
+In this post, I will introduce the foundational concepts of automatic differentiation and present an elegant implementation of forward automatic differentiation in Haskell, revealing the mathematical beauty and computational efficiency that make this technique indispensable in modern computational science.</p>
+<h2 id="automatic-differentiation">Automatic Differentiation</h2>
+<p>The chain rule is the fundamental concept for automatic differentiation.
+Consider the composite function $h(x) = f(g(d(x)))$ with $u_3 = y = f(u_2), u_2 = g(u_1), u_1 = l(u_0), u_0 = x$, then the chain rules tells us that
+$$
+\frac{\partial y}{\partial x} = \frac{\partial f(u_2)}{\partial u_2} \frac{\partial g(u_1)}{\partial u_1} \frac{\partial l(x)}{\partial x} = \frac{\partial y}{\partial u_2} \frac{\partial u_2}{\partial u_1} \frac{\partial u_1}{\partial x}
+$$
+This yields two directions in which we can calculate the overall derivative:</p>
+<ol>
+<li><strong>Forward mode</strong>: We start with the right-most term and then recursively work our way "outwards". That is, we recursively compute
+$$
+\frac{\partial u_i}{\partial x} = \frac{\partial u_i}{\partial u_{i - 1}} \frac{\partial u_{i - 1}}{\partial x}
+$$
+and start with $\frac{\partial u_0}{\partial x} = \frac{\partial x}{\partial x} = 1$</li>
+<li><strong>Backward (reverse) mode</strong>: We start with the right-most term and then recursively work our way "inwards":
+$$
+\frac{\partial y}{\partial u_i} = \frac{\partial y}{\partial u_{i + 1}} \frac{\partial u_{i + 1}}{\partial u_i}
+$$
+and we start with $\frac{\partial y}{\partial u_n} = \frac{\partial y}{\partial y} = 1$.</li>
+</ol>
+<p>Notice how the forward mode keeps the independent variable fixed and thereby computes the derivative for each variable in one separate pass.
+Reverse mode, on the other hand, requires the evaluated partial functions for the partial derivatives. Thus, function is evaluated first and then the derivatives with respect to all independent variables are calculated in an additional pass.</p>
+<h2 id="dual-numbers">Dual Numbers</h2>
+<p>Now, consider a function $f(x)$ and the taylor expansion of $f$ around some $\epsilon$ such that $\epsilon^2 = 0$ and $\epsilon \neq 0$:</p>
+<p>$$
+\begin{align*}
+f(x + \epsilon) &amp;= \sum_{d = 0}^\infty \frac{f^d(x)}{d!} \epsilon^d \\
+&amp;= f(x) + f'(x) \cdot \epsilon + f''(x) \cdot \epsilon^2 + f'''(x) \cdot \epsilon \epsilon^2 + \dots \\
+&amp;= f(x) + f'(x) \epsilon
+\end{align*}
+$$</p>
+<p>Notice that the factor of $\epsilon$ corresponds to the derivative of $f$.
+What happens if we have another function $g$ and we try to add or multiply it?</p>
+<p>$$
+\begin{align*}
+f(x + \epsilon) + g(x + \epsilon) &amp;= f(x) + f'(x) \epsilon + g(x) + g'(x) \epsilon = f(x) + g(x) + (f'(x) + g'(x)) \epsilon \\
+f(x + \epsilon) \cdot g(x + \epsilon) &amp;= (f(x) + f'(x)\epsilon) \cdot (g(x) + g'(x) \epsilon) = f(x) g(x) + (f(x) g'(x) + g(x) f'(x)) \epsilon
+\end{align*}
+$$</p>
+<p>You might notice these as the sum and product rule of derivatives!
+If we squint a bit, we see that the first term always corresponds to the function we want to compute the derivative of and the second term represents the actual derivative.
+We ca leverage this for automatically computing the forward derivative of arbitrary function for which a taylor expansion exists.</p>
+<p>We define dual numbers as a pair
+$$d = \langle a, b \rangle$$
+where $a = f(x)$ and $b = f'(x)$ (of the $\epsilon$ term).
+For example, we can write $\sin(x)$ as the dual number
+$$\langle \sin(x), \cos(x) \rangle$$
+or
+$$\langle \ln x, \frac{1}{x} \rangle, \quad \langle e^x, e^x \rangle$$
+Using the sum, product rule and division rule, that is,
+$$
+\begin{align*}
+\langle a, b \rangle + \langle c, d \rangle &amp;= \langle a + d, b + c \rangle \\
+\langle a, b \rangle \cdot \langle c, d \rangle &amp;= \langle a \cdot b, ad + cb \rangle \\
+\langle a, b \rangle / \langle c, d \rangle &amp;= \langle a / c, \frac{bc - ad}{c^2} \rangle
+\end{align*}
+$$
+we can piece together the derivative for more complex functions.
+Consider, for example, the sigmoid (activation) function $\sigma(x) = \frac{e^x}{1 + e^x}$ at some $x$ represented as the dual number $\langle x, 1 \rangle$:
+$$
+\begin{align*}
+\frac{e^{\langle x, 1 \rangle}}{\langle 1, 0 \rangle + e^{\langle x, 1 \rangle}} &amp;= \frac{\langle e^x, e^x \rangle}{\langle 1, 0 \rangle + \langle e^x, e^x \rangle} \\
+&amp;= \frac{\langle e^x, e^x \rangle}{\langle 1 + e^x, e^x \rangle} \\
+&amp;= \langle \frac{e^x}{1 + e^x}, \frac{e^x (1 + e^x) - e^{2x}}{(1 + e^x)^2} \rangle \\
+&amp;= \langle \frac{e^x}{1 + e^x}, \frac{1}{1 + e^x} \cdot \frac{e^x}{1 + e^x} \rangle \\
+&amp;= \langle \sigma(x), (1 - \sigma(x)) \sigma(x) \rangle
+\end{align*}
+$$
+Notice that we thread through the input and arrive at the valid derivative automatically.</p>
+<h2 id="implementation">Implementation</h2>
+<p>For the implementation, I chose Haskell due to its nice overloading capabilities via type classes.</p>
+<p>First, we define a datatype for dual numbers:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="haskell"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">data</span><span style="color: light-dark(#D73A49, #F97583);"> Dual</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span> real</span><span style="color: light-dark(#D73A49, #F97583);"> ::</span><span style="color: light-dark(#D73A49, #F97583);"> Double</span><span>,</span><span> dual</span><span style="color: light-dark(#D73A49, #F97583);"> ::</span><span style="color: light-dark(#D73A49, #F97583);"> Double</span><span> }</span></span></code></pre>
+<p>Next, we implement the <code>Num</code> and <code>Fractional</code> type class since we want to overload the <code>+</code>, <code>-</code>, <code>*</code> and <code>/</code> operator:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="haskell"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">instance</span><span style="color: light-dark(#D73A49, #F97583);"> Num</span><span style="color: light-dark(#D73A49, #F97583);"> Dual</span><span style="color: light-dark(#D73A49, #F97583);"> where</span></span>
+<span class="giallo-l"><span>  (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> +</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> c d</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>a </span><span style="color: light-dark(#D73A49, #F97583);">+</span><span> c</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">+</span><span> d</span><span>)</span></span>
+<span class="giallo-l"><span>  (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> c d</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> c</span><span>)</span><span> (</span><span>a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> d </span><span style="color: light-dark(#D73A49, #F97583);">+</span><span> b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> c</span><span>)</span></span>
+<span class="giallo-l"><span>  negate </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>negate a</span><span>)</span><span> (</span><span>negate b</span><span>)</span></span>
+<span class="giallo-l"><span>  fromInteger n </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>fromInteger n</span><span>)</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">  --</span><span style="color: light-dark(#6A737D, #6A737D);"> abs and signum are not defined for Dual numbers</span></span>
+<span class="giallo-l"><span>  abs </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span> undefined</span></span>
+<span class="giallo-l"><span>  signum </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span> undefined</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">instance</span><span style="color: light-dark(#D73A49, #F97583);"> Fractional</span><span style="color: light-dark(#D73A49, #F97583);"> Dual</span><span style="color: light-dark(#D73A49, #F97583);"> where</span></span>
+<span class="giallo-l"><span>  (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> c d</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>a </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> c</span><span>)</span><span> (</span><span>(</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> c </span><span style="color: light-dark(#D73A49, #F97583);">-</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> d</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> (</span><span>c </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> c</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  fromRational r </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>fromRational r</span><span>)</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span></span></code></pre>
+<p>Notice that these exactly correspond to the rules we previously derived formally.</p>
+<p>Of course automatic differentiation is not pure magic and need to define the derivatives of common functions once manually.
+This can be done by implementing the <code>Floating</code> type class where many commonly used mathematical functions are defined and can be overloaded to also accept dual numbers:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="haskell"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">instance</span><span style="color: light-dark(#D73A49, #F97583);"> Floating</span><span style="color: light-dark(#D73A49, #F97583);"> Dual</span><span style="color: light-dark(#D73A49, #F97583);"> where</span></span>
+<span class="giallo-l"><span>  pi </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> pi </span><span style="color: light-dark(#005CC5, #79B8FF);">0</span></span>
+<span class="giallo-l"><span>  exp </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>exp a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> exp a</span><span>)</span></span>
+<span class="giallo-l"><span>  log </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>log a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> a</span><span>)</span></span>
+<span class="giallo-l"><span>  sin </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>sin a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> cos a</span><span>)</span></span>
+<span class="giallo-l"><span>  cos </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>cos a</span><span>)</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> sin a</span><span>)</span></span>
+<span class="giallo-l"><span>  asin </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>asin a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> sqrt </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  acos </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>acos a</span><span>)</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> sqrt </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  atan </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>atan a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> +</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  sinh </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>sinh a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> cosh a</span><span>)</span></span>
+<span class="giallo-l"><span>  cosh </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>cosh a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> sinh a</span><span>)</span></span>
+<span class="giallo-l"><span>  asinh </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>asinh a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> sqrt </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> +</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  acosh </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>acosh a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> sqrt </span><span>(</span><span>a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">-</span><span style="color: light-dark(#005CC5, #79B8FF);"> 1</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  atanh </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> a b</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> Dual</span><span> (</span><span>atanh a</span><span>)</span><span> (</span><span>b </span><span style="color: light-dark(#D73A49, #F97583);">/</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span> a </span><span style="color: light-dark(#D73A49, #F97583);">*</span><span> a</span><span>)</span><span>)</span></span></code></pre>
+<p>Now we get to the actual interesting part: automatically compute the derivative for any function of the type $\mathbb{R} \to \mathbb{R}$.
+Hence, we define the function <code>diff</code> with the type <code>(Dual -&gt; Dual) -&gt; Double -&gt; Double</code>, that is, a function that accepts a function <code>f</code> and an argument <code>x</code> at which the derivative shall be evaluated:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="haskell"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">diff</span><span style="color: light-dark(#D73A49, #F97583);"> ::</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">Dual</span><span style="color: light-dark(#D73A49, #F97583);"> -&gt;</span><span style="color: light-dark(#D73A49, #F97583);"> Dual</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> -&gt;</span><span style="color: light-dark(#D73A49, #F97583);"> Double</span><span style="color: light-dark(#D73A49, #F97583);"> -&gt;</span><span style="color: light-dark(#D73A49, #F97583);"> Double</span></span>
+<span class="giallo-l"><span>diff f x </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span> dual </span><span style="color: light-dark(#D73A49, #F97583);">$</span><span> f </span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">Dual</span><span> x </span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>)</span></span></code></pre>
+<p>Magical, isn't it?
+Now we have an embedded DSL for computing derivatives in Haskell:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="haskell"><span class="giallo-l"><span>main </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#D73A49, #F97583);"> do</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">  let</span><span> f x </span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);"> 1</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span style="color: light-dark(#D73A49, #F97583);"> +</span><span> e </span><span style="color: light-dark(#D73A49, #F97583);">**</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span> x</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span>  putStrLn </span><span style="color: light-dark(#D73A49, #F97583);">$</span><span> diff f </span><span style="color: light-dark(#005CC5, #79B8FF);">0</span></span></code></pre>
+<p>Alternatively, you can also simply start a REPL session using <code>ghci</code>:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">$</span><span style="color: light-dark(#032F62, #9ECBFF);"> ghci</span><span style="color: light-dark(#032F62, #9ECBFF);"> dual.hs</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">ghci</span><span>&gt;</span><span style="color: light-dark(#032F62, #9ECBFF);"> f</span><span style="color: light-dark(#032F62, #9ECBFF);"> x</span><span style="color: light-dark(#032F62, #9ECBFF);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> 1</span><span style="color: light-dark(#032F62, #9ECBFF);"> /</span><span> (1</span><span style="color: light-dark(#032F62, #9ECBFF);"> +</span><span style="color: light-dark(#032F62, #9ECBFF);"> e</span><span style="color: light-dark(#005CC5, #79B8FF);"> *</span><span style="color: light-dark(#005CC5, #79B8FF);">*</span><span> (-</span><span style="color: light-dark(#032F62, #9ECBFF);"> x</span><span>))</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">ghci</span><span>&gt;</span><span style="color: light-dark(#032F62, #9ECBFF);"> diff</span><span style="color: light-dark(#032F62, #9ECBFF);"> f</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span></span></code></pre>
+<p>Running this yields <code>0.25</code> as result.
+Plugging this into the analytical form we have found previously yields the same result:
+$$\frac{e^x}{1 + e^x} \frac{1}{1 + e^x} = \frac{1}{2} \cdot \frac{1}{2} = \frac{1}{4}$$</p>
+<h2 id="extensions">Extensions</h2>
+<p>I hope you also found this as fascinating as I did when I first heard about it.
+There are some interesting generalisations, we can apply to our current implementation as an exercise:</p>
+<ol>
+<li>Think about how to compute the partial derivative of functions $\mathbb{R} \to \mathbb{R}^m$ and implement a function <code>partial :: (Dual -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [Double]</code> which computes the partial derivatives with respect to the i-th parameter.</li>
+<li>How can you generalise <code>partial</code> to also accept functions $\mathbb{R}^n \to \mathbb{R}^m$? Adapt the implementation of <code>partial</code> such that it has the type <code>([Dual] -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [Double]</code>.</li>
+<li>Finally, implement a function <code>gradient</code> that computes the gradient of functions $\mathbb{R}^n \to \mathbb{R}^m$. <code>gradient</code> now shall have the type <code>([Dual] -&gt; [Dual]) -&gt; Int -&gt; Double -&gt; [[Double]]</code>, that is, it returns a matrix. Hint: <code>partial</code> should come in handy here. What do you observe? When is forward AD to be preferred? If $n &lt; m$ or $n &gt; m$?</li>
+</ol>
+
+    </div>
+</article>
+
+    </main>
+    <footer id="site-footer">
+        
+        <ul id="socials">
+            
+            <li>
+                <a href="https:&#x2F;&#x2F;github.com&#x2F;dvdvgt" rel="me" title="GitHub">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/github.svg"); -webkit-mask-image: url("https://dvoigt.de/github.svg")'></i>
+                    <span>GitHub</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="https:&#x2F;&#x2F;se.informatik.uni-tuebingen.de&#x2F;team&#x2F;voigt&#x2F;" rel="me" title="Website">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/website.svg"); -webkit-mask-image: url("https://dvoigt.de/website.svg")'></i>
+                    <span>Website</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="mailto:website@dvoigt.de" rel="me" title="mail">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/mail.svg"); -webkit-mask-image: url("https://dvoigt.de/mail.svg")'></i>
+                    <span>mail</span>
+                </a>
+            </li>
+            
+        </ul>
+        
+
+        <div id="contact">
+            <span>&copy; 2026 David Voigt</span>
+            <span><a href="https://webwhois.denic.de/?lang=de&query=dvoigt.de">Contact</a></span>
+        </div>
+
+        
+    </footer>
+</body>
+</html>

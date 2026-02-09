@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/firacode@6.2.0/distr/fira_code.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/fira-sans@5.2.7/index.min.css">
+    <link rel="stylesheet" href="https://dvoigt.de/main.css">
+    <title>Force-Directed Graph Drawing :: David Voigt</title>
+    
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          // customised options
+          // • auto-render specific keys, e.g.:
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          // • rendering keys, e.g.:
+          throwOnError : false
+        });
+    });
+</script>
+
+
+</head>
+<body>
+    <header>
+        <nav>
+            <div id="nav-left">
+                <a href="/" class="site-title">David Voigt</a>
+            </div>
+            <!-- <span class="nav-separator">·</span> -->
+            <div id="nav-right">
+            
+                
+                <a href="https://dvoigt.de" >home</a>
+                
+                <a href="https://dvoigt.de/posts" >posts</a>
+                
+            
+            
+            </div>
+        </nav>
+    </header>
+    <main>
+        <h1> </h1>
+        
+<article class="article">
+    <header class="article-header">
+        <h1>Force-Directed Graph Drawing</h1>
+        <time datetime="2026-02-08">08.02.2026</time>
+    </header>
+
+    <div class="article-content">
+        <p>Graphs offer a nice theoretical framework for elegantly describing and solving many practical problems like shortest-path (Dijkstra, A*, BFS, DFS), network routing (max-flow) or dependency resolution (topological ordering).
+Since graphs are such a general concept and surface in a wide variety of problem domains, the visualisation of graphs can be highly insightful.
+Yet, graph drawing, the combination of geometry with graph theory, can be difficult problem.</p>
+<p>Recently, I attended a talk in which the live-demo featured such a visualised graph.
+I found the result very aesthetically pleasing and enjoyed the interactiveness of it.
+You could freely drag and move nodes, and the graph would rearrange itself based on the new initial configuration nicely.
+I was intrigued and decided to implement such a force-directed graph drawing (FDGD) algorithm myself.
+Here is what I learned on the way.</p>
+<p><img src="/fdgd.png" alt="" /></p>
+<h2 id="basics">Basics</h2>
+<p>Theoretically, a graph $G$ can be relatively easily defined.
+A graph $G = (V, E)$ is tuple consisting of a set of vertices/nodes $V$ and a set of edges connecting the vertices.
+More formally</p>
+<p>$$V := \{ v_1, v_2, \dots, v_n \}, \quad E := \{ \{u, v\} \mid u, v \in V \}.$$</p>
+<p>Depending on whether the direction of the edges is of importance, the graph is either considered directed or undirected.
+In the following, we will just consider undirected graphs for simplicity.</p>
+<p>Now, based on this definition, we are completely free to place each vertex wherever we want given that we connected all vertices in $V$ by the edges defined by $E$.
+However, of course, not all possible configurations are aesthetically pleasing or even instructive.
+There are a lot of different ways to measure the quality of a graph visualisation like the number of crossing edges or minimising the maximum length of all edges.
+Conveniently, FDGD inherently checks many of these boxes, so let's see how it works.</p>
+<h2 id="the-force-will-be-with-you-always">The Force Will Be with You, Always</h2>
+<p>Classical FDGD algorithms achieve this by using only two forces: an attracting force and a repulsive force.
+The repulsive force is often derived from <a rel="external" href="https://en.wikipedia.org/wiki/Coulomb%27s_law">Coulomb's Law</a>:</p>
+<p>$$F_r = k_r \frac{|q_1| |q_2|}{r^2}$$</p>
+<p>Like electrons are repulsing one another inversely proportional to the distance between them, each vertex in a graph repulses all other vertices:
+Since our vertices do not have a charge or, rather, have all the same charge, we can just subsume this by the constant $k_e$.
+Whereas $k_r$ is originally the Coulomb's Constant, we are free to choose our own constant here.</p>
+<p>Having now covered repulsive force, we are still missing an attracting force that binds the graph together.
+For this, we choose <a rel="external" href="https://en.wikipedia.org/wiki/Hooke%27s_law">Hooke's Law</a> which models the spring-force induced by the graph's edges.</p>
+<p>$$F_a = r \cdot k_a$$</p>
+<p>That is, if we think about the edges as springs, the amount of force needed to further extend the spring scales linearly with the length of the extension $r$ and some constant $k_a$.</p>
+<h2 id="implementation">Implementation</h2>
+<p>That is it. This is basically all we need to nicely draw graphs.
+We have the repulsive force</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="javascript"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">repel</span><span>(</span><span>other</span><span>: </span><span>Vertex</span><span>,</span><span> params</span><span>: </span><span>Parameters</span><span>)</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dx</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> other</span><span>.</span><span>x</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>x</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dy</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> other</span><span>.</span><span>y</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>y</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dist</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">hypot</span><span>(</span><span>dx</span><span>,</span><span> dy</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> ||</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span style="color: light-dark(#005CC5, #79B8FF);">.</span><span style="color: light-dark(#005CC5, #79B8FF);">01</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> force</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> params</span><span>.</span><span>repulsion</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> (</span><span>dist</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> dist</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> fx</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> (</span><span>force</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> dx</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> dist</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> fy</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> (</span><span>force</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> dy</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> dist</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">apply</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span>fx</span><span>,</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span>fy</span><span>)</span></span>
+<span class="giallo-l"><span>    other</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">apply</span><span>(</span><span>fx</span><span>,</span><span> fy</span><span>)</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
+<p>and the attracting force:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="javascript"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">attract</span><span>(</span><span>other</span><span>: </span><span>Vertex</span><span>,</span><span> params</span><span>: </span><span>Parameters</span><span>)</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dx</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> other</span><span>.</span><span>x</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>x</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dy</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> other</span><span>.</span><span>y</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>y</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> dist</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">hypot</span><span>(</span><span>dx</span><span>,</span><span> dy</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> ||</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span style="color: light-dark(#005CC5, #79B8FF);">.</span><span style="color: light-dark(#005CC5, #79B8FF);">01</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> force</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> (</span><span>dist</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span> params</span><span>.</span><span>springLength</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> params</span><span>.</span><span>springStrength</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> fx</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> (</span><span>force</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> dx</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> dist</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> fy</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> (</span><span>force</span><span style="color: light-dark(#D73A49, #F97583);"> *</span><span> dy</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span> dist</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">apply</span><span>(</span><span>fx</span><span>,</span><span> fy</span><span>)</span></span>
+<span class="giallo-l"><span>    other</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">apply</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span>fx</span><span>,</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span>fy</span><span>)</span></span>
+<span class="giallo-l"><span>}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">apply</span><span>(</span><span>fx</span><span>: </span><span>number</span><span>,</span><span> fy</span><span>: </span><span>number</span><span>)</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vx</span><span style="color: light-dark(#D73A49, #F97583);"> +=</span><span> fx</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vy</span><span style="color: light-dark(#D73A49, #F97583);"> +=</span><span> fy</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
+<p>Finally, we also apply some damping and limit the speed:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="javascript"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">integrate</span><span>(</span><span>params</span><span>: </span><span>Parameters</span><span>)</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    const</span><span style="color: light-dark(#005CC5, #79B8FF);"> maxv</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> params</span><span>.</span><span>maxVelocity</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vx</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">max</span><span>(</span><span>Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">min</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">this</span><span>.</span><span>vx</span><span>,</span><span> maxv</span><span>)</span><span>,</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span>maxv</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vy</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">max</span><span>(</span><span>Math</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">min</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">this</span><span>.</span><span>vy</span><span>,</span><span> maxv</span><span>)</span><span>,</span><span style="color: light-dark(#D73A49, #F97583);"> -</span><span>maxv</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vx</span><span style="color: light-dark(#D73A49, #F97583);"> *=</span><span> params</span><span>.</span><span>damping</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>vy</span><span style="color: light-dark(#D73A49, #F97583);"> *=</span><span> params</span><span>.</span><span>damping</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>x</span><span style="color: light-dark(#D73A49, #F97583);"> +=</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>vx</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">    this</span><span>.</span><span>y</span><span style="color: light-dark(#D73A49, #F97583);"> +=</span><span style="color: light-dark(#005CC5, #79B8FF);"> this</span><span>.</span><span>vy</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
+<p>Notice that we are accumulating forces and then, in the end, just add them to the velocity.
+This is, of course, a <em>very</em> simplified physical model.
+Normally, force is $kg \cdot \frac{m}{s^2}$, the velocity is the change in position $\frac{dx}{dt} = v(t)$, and the acceleration is in turn the change in velocity $\frac{dv}{dt} = a(t)$.
+We can, however, try to justify our implementation by assuming that the mass is just one ($m = 1 kg$), and since we are only considering discrete time steps, $dt = 1$.
+Under these assumptions, we can derive the following (simplified) update equations for the position and velocity:</p>
+<p>$$
+\begin{align*}
+x(t + 1) - x(t) &amp;= v(t) \\
+\Leftrightarrow x(t + 1) &amp;= x(t) + v(t) \\
+v(t + 1) - v(t) &amp;= a(t) \\
+\Leftrightarrow v(t + 1) &amp;= v(t) + a(t) \\
+&amp;= v(t) + F(t)
+\end{align*}
+$$</p>
+<p>I invite you to check out the implementation at <a rel="external" href="https://fdgd.dvoigt.de">https://fdgd.dvoigt.de</a>.</p>
+
+    </div>
+</article>
+
+    </main>
+    <footer id="site-footer">
+        
+        <ul id="socials">
+            
+            <li>
+                <a href="https:&#x2F;&#x2F;github.com&#x2F;dvdvgt" rel="me" title="GitHub">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/github.svg"); -webkit-mask-image: url("https://dvoigt.de/github.svg")'></i>
+                    <span>GitHub</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="https:&#x2F;&#x2F;se.informatik.uni-tuebingen.de&#x2F;team&#x2F;voigt&#x2F;" rel="me" title="Website">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/website.svg"); -webkit-mask-image: url("https://dvoigt.de/website.svg")'></i>
+                    <span>Website</span>
+                </a>
+            </li>
+            
+            <li>
+                <a href="mailto:website@dvoigt.de" rel="me" title="mail">
+                    <i class="icon" style='mask-image: url("https://dvoigt.de/mail.svg"); -webkit-mask-image: url("https://dvoigt.de/mail.svg")'></i>
+                    <span>mail</span>
+                </a>
+            </li>
+            
+        </ul>
+        
+
+        <div id="contact">
+            <span>&copy; 2026 David Voigt</span>
+            <span><a href="https://webwhois.denic.de/?lang=de&query=dvoigt.de">Contact</a></span>
+        </div>
+
+        
+    </footer>
+</body>
+</html>
